@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Ukur - Kelas 1 SD</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter & Fredoka / Comic-style Font for Kids -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti for Celebration Effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandYellow: '#FFD166',
+                        brandOrange: '#FF9F1C',
+                        brandBlue: '#4EA8DE',
+                        brandGreen: '#06D6A0',
+                        brandRed: '#EF476F',
+                        brandPurple: '#118AB2',
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'cursive', 'sans-serif'],
+                        quicksand: ['Quicksand', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', 'Quicksand', sans-serif;
+            background-color: #F7F9FC;
+            background-image: radial-gradient(#4EA8DE 0.75px, transparent 0.75px), radial-gradient(#FFD166 0.75px, #F7F9FC 0.75px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* Custom Bounce & Animation Effects */
+        .bounce-hover {
+            transition: all 0.2s ease-in-out;
+        }
+        .bounce-hover:hover {
+            transform: scale(1.05) translateY(-4px);
+        }
+        .bounce-hover:active {
+            transform: scale(0.95);
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Game Elements Styles */
+        .drag-item {
+            cursor: grab;
+            touch-action: none;
+        }
+        .drag-item:active {
+            cursor: grabbing;
+        }
+        .drop-zone {
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .drop-zone.drag-over {
+            background-color: #E2F0D9;
+            border-color: #06D6A0;
+            transform: scale(1.02);
+        }
+
+        /* Seesaw Balance Animation */
+        .seesaw-beam {
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center center;
+        }
+
+        /* Speech Bubble Tail */
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 30px;
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: #FFFFFF transparent;
+            display: block;
+            width: 0;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F1F1F1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FFD166;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF9F1C;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
+
+    <!-- HEADER / NAVIGATION BAR -->
+    <header class="bg-white border-b-4 border-brandYellow sticky top-0 z-50 shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showScreen('home')">
+                <div class="w-12 h-12 bg-brandYellow rounded-2xl flex items-center justify-center text-3xl shadow-md transform -rotate-6">
+                    📏
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-brandPurple leading-none">Petualangan Ukur</h1>
+                    <p class="text-xs md:text-sm text-slate-500 font-semibold">Matematika Kelas 1 SD</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 md:gap-4">
+                <!-- User Greeting Widget -->
+                <div id="user-badge" class="hidden md:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                    <span class="text-lg">👧</span>
+                    <span id="display-student-name" class="font-bold text-brandPurple text-sm">Siswa</span>
+                </div>
+
+                <!-- Audio Toggle Button -->
+                <button id="audio-btn" onclick="toggleAudio()" class="bg-amber-100 text-amber-700 p-3 rounded-2xl hover:bg-amber-200 transition flex items-center gap-2 text-sm font-bold shadow-sm">
+                    <i class="fas fa-volume-up text-lg" id="audio-icon"></i>
+                    <span class="hidden md:inline" id="audio-text">Suara ON</span>
+                </button>
+
+                <!-- Help Button -->
+                <button onclick="openModal('help-modal')" class="bg-blue-100 text-blue-600 p-3 rounded-2xl hover:bg-blue-200 transition text-sm font-bold shadow-sm">
+                    <i class="fas fa-question-circle text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-5xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- ================= HALAMAN PEMBUKA / HOME ================= -->
+        <section id="screen-home" class="screen-view">
+            <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl border-4 border-amber-200 text-center relative overflow-hidden">
+                <!-- Background Decorative Elements -->
+                <div class="absolute -top-10 -left-10 w-32 h-32 bg-brandYellow/20 rounded-full blur-xl"></div>
+                <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-brandBlue/20 rounded-full blur-xl"></div>
+
+                <div class="inline-block bg-amber-100 text-amber-800 text-sm md:text-base font-bold px-4 py-1.5 rounded-full mb-4 shadow-inner">
+                    ✨ Halo Sobat Cilik! Selamat Datang di ✨
+                </div>
+
+                <h2 class="text-3xl md:text-5xl font-extrabold text-brandPurple mb-4 leading-tight">
+                    PETUALANGAN UKUR:<br>
+                    <span class="text-brandOrange">Ayo Membandingkan Panjang & Berat!</span>
+                </h2>
+
+                <!-- Mascot & Illustration Hero -->
+                <div class="my-6 flex flex-col md:flex-row items-center justify-center gap-6">
+                    <div class="w-48 h-48 md:w-56 md:h-56 bg-gradient-to-tr from-sky-100 to-amber-100 rounded-full p-4 flex items-center justify-center shadow-inner relative floating">
+                        <svg viewBox="0 0 200 200" class="w-full h-full">
+                            <!-- Kid Mascot with Ruler & Scale -->
+                            <circle cx="100" cy="80" r="45" fill="#FFE0BD"/>
+                            <!-- Hair -->
+                            <path d="M 60,75 Q 100,30 140,75 Q 120,40 100,45 Q 80,40 60,75" fill="#5C3D2E"/>
+                            <!-- Eyes -->
+                            <circle cx="85" cy="80" r="5" fill="#2B2B2B"/>
+                            <circle cx="115" cy="80" r="5" fill="#2B2B2B"/>
+                            <!-- Smile -->
+                            <path d="M 85,95 Q 100,110 115,95" fill="none" stroke="#D32F2F" stroke-width="4" stroke-linecap="round"/>
+                            <!-- Cheeks -->
+                            <circle cx="78" cy="88" r="6" fill="#FF8A80" opacity="0.6"/>
+                            <circle cx="122" cy="88" r="6" fill="#FF8A80" opacity="0.6"/>
+                            <!-- Body -->
+                            <path d="M 70,125 Q 100,115 130,125 L 140,180 L 60,180 Z" fill="#4EA8DE"/>
+                            <!-- Ruler in Hand -->
+                            <rect x="130" y="100" width="12" height="60" rx="3" fill="#FFD166" transform="rotate(-20 130 100)"/>
+                            <line x1="133" y1="110" x2="138" y2="110" stroke="#8D6E63" stroke-width="2"/>
+                            <line x1="133" y1="120" x2="138" y2="120" stroke="#8D6E63" stroke-width="2"/>
+                            <line x1="133" y1="130" x2="138" y2="130" stroke="#8D6E63" stroke-width="2"/>
+                        </svg>
+                    </div>
+
+                    <!-- Input Student Name Box -->
+                    <div class="bg-amber-50 p-6 rounded-2xl border-2 border-amber-200 max-w-sm w-full text-left shadow-sm">
+                        <label for="student-name-input" class="block font-bold text-slate-700 mb-2 text-base">
+                            ✏️ Tulis Nama Kamu Di Sini:
+                        </label>
+                        <input type="text" id="student-name-input" placeholder="Contoh: Budi" 
+                               class="w-full px-4 py-3 rounded-xl border-2 border-brandYellow focus:border-brandOrange focus:outline-none text-lg font-bold text-slate-800 shadow-inner mb-4">
+                        
+                        <button onclick="startApp()" class="w-full bg-brandGreen text-white font-bold text-xl py-4 rounded-xl shadow-lg hover:bg-emerald-500 transition active:scale-95 flex items-center justify-center gap-2 bounce-hover">
+                            <span>MULAI BELAJAR</span>
+                            <i class="fas fa-play-circle text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Quick Menu Grid -->
+                <div class="mt-8 pt-6 border-t-2 border-dashed border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button onclick="checkNameAndNavigate('tujuan')" class="p-4 bg-purple-50 rounded-2xl border-2 border-purple-200 hover:bg-purple-100 transition text-center bounce-hover">
+                        <div class="text-3xl mb-1">🎯</div>
+                        <div class="font-bold text-purple-800 text-sm">Tujuan Belajar</div>
+                    </button>
+                    <button onclick="checkNameAndNavigate('materi-panjang')" class="p-4 bg-sky-50 rounded-2xl border-2 border-sky-200 hover:bg-sky-100 transition text-center bounce-hover">
+                        <div class="text-3xl mb-1">📏</div>
+                        <div class="font-bold text-sky-800 text-sm">Panjang Benda</div>
+                    </button>
+                    <button onclick="checkNameAndNavigate('materi-berat')" class="p-4 bg-emerald-50 rounded-2xl border-2 border-emerald-200 hover:bg-emerald-100 transition text-center bounce-hover">
+                        <div class="text-3xl mb-1">⚖️</div>
+                        <div class="font-bold text-emerald-800 text-sm">Berat Benda</div>
+                    </button>
+                    <button onclick="checkNameAndNavigate('praktik')" class="p-4 bg-amber-50 rounded-2xl border-2 border-amber-200 hover:bg-amber-100 transition text-center bounce-hover">
+                        <div class="text-3xl mb-1">🎒</div>
+                        <div class="font-bold text-amber-800 text-sm">Praktik Kelas</div>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= MENU MAIN DASHBOARD (NAVIGATION HUB) ================= -->
+        <section id="screen-dashboard" class="screen-view hidden">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl md:text-3xl font-extrabold text-brandPurple">Pilih Menu Petualangan 🚀</h2>
+                <p class="text-slate-600 font-medium">Klik salah satu tombol di bawah untuk memulai kegiatan!</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Menu 1: Tujuan -->
+                <div onclick="showScreen('tujuan')" class="bg-white p-6 rounded-3xl border-4 border-purple-300 shadow-lg hover:shadow-xl transition cursor-pointer flex items-center gap-5 bounce-hover">
+                    <div class="w-20 h-20 bg-purple-100 rounded-2xl flex items-center justify-center text-4xl shrink-0">🎯</div>
+                    <div>
+                        <h3 class="text-xl font-bold text-purple-900">1. Tujuan Pembelajaran</h3>
+                        <p class="text-slate-600 text-sm mt-1">Apa saja hal seru yang akan kamu pelajari hari ini?</p>
+                    </div>
+                </div>
+
+                <!-- Menu 2: Panjang -->
+                <div onclick="showScreen('materi-panjang')" class="bg-white p-6 rounded-3xl border-4 border-sky-300 shadow-lg hover:shadow-xl transition cursor-pointer flex items-center gap-5 bounce-hover">
+                    <div class="w-20 h-20 bg-sky-100 rounded-2xl flex items-center justify-center text-4xl shrink-0">📏</div>
+                    <div>
+                        <h3 class="text-xl font-bold text-sky-900">2. Belajar Panjang & Pendek</h3>
+                        <p class="text-slate-600 text-sm mt-1">Ayo bandingkan pensil, penggaris, dan pita dengan posisi rata!</p>
+                    </div>
+                </div>
+
+                <!-- Menu 3: Berat -->
+                <div onclick="showScreen('materi-berat')" class="bg-white p-6 rounded-3xl border-4 border-emerald-300 shadow-lg hover:shadow-xl transition cursor-pointer flex items-center gap-5 bounce-hover">
+                    <div class="w-20 h-20 bg-emerald-100 rounded-2xl flex items-center justify-center text-4xl shrink-0">⚖️</div>
+                    <div>
+                        <h3 class="text-xl font-bold text-emerald-900">3. Belajar Berat & Ringan</h3>
+                        <p class="text-slate-600 text-sm mt-1">Simulasi timbangan jungkit-jangkit untuk kapas, batu, dan botol!</p>
+                    </div>
+                </div>
+
+                <!-- Menu 4: Praktik -->
+                <div onclick="showScreen('praktik')" class="bg-white p-6 rounded-3xl border-4 border-amber-300 shadow-lg hover:shadow-xl transition cursor-pointer flex items-center gap-5 bounce-hover">
+                    <div class="w-20 h-20 bg-amber-100 rounded-2xl flex items-center justify-center text-4xl shrink-0">🎒</div>
+                    <div>
+                        <h3 class="text-xl font-bold text-amber-900">4. Praktik Langsung di Kelas</h3>
+                        <p class="text-slate-600 text-sm mt-1">Pegang benda nyatamu dan laporkan hasil pengukuranmu!</p>
+                    </div>
+                </div>
+
+                <!-- Menu 5: Games -->
+                <div onclick="showScreen('game')" class="md:col-span-2 bg-gradient-to-r from-rose-400 to-orange-400 p-6 rounded-3xl shadow-xl hover:shadow-2xl transition cursor-pointer flex items-center justify-between text-white bounce-hover">
+                    <div class="flex items-center gap-5">
+                        <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-4xl">🎮</div>
+                        <div>
+                            <span class="bg-white/30 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Tantangan Seru</span>
+                            <h3 class="text-2xl font-extrabold mt-1">5. Permainan & Kuis Interaktif</h3>
+                            <p class="text-rose-100 text-sm">Buktikan kemampuanmu lewat game geser & cocokkan gambar!</p>
+                        </div>
+                    </div>
+                    <div class="hidden sm:block text-3xl">➡️</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 1. MENU TUJUAN PEMBELAJARAN ================= -->
+        <section id="screen-tujuan" class="screen-view hidden">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-lg border-4 border-purple-200">
+                <!-- Nav Header Inside Section -->
+                <div class="flex items-center justify-between mb-6 pb-4 border-b">
+                    <h2 class="text-2xl font-bold text-purple-900 flex items-center gap-3">
+                        <span>🎯</span> Tujuan Pembelajaran & Kompetensi
+                    </h2>
+                    <button onclick="showScreen('dashboard')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-sm">
+                        ⬅️ Kembali
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-purple-50 p-5 rounded-2xl border-2 border-purple-200">
+                        <h3 class="font-bold text-purple-800 text-lg mb-3 flex items-center gap-2">
+                            <i class="fas fa-bullseye text-purple-600"></i> Tujuan Kita Hari Ini:
+                        </h3>
+                        <ul class="space-y-3 text-slate-700 font-medium text-sm md:text-base">
+                            <li class="flex items-start gap-2">
+                                <span class="bg-purple-200 text-purple-800 text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shrink-0 mt-0.5">1</span>
+                                <span>Kamu bisa membandingkan **panjang dua benda** secara langsung.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="bg-purple-200 text-purple-800 text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shrink-0 mt-0.5">2</span>
+                                <span>Kamu dapat menentukan mana benda yang **lebih panjang** dan **lebih pendek**.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="bg-purple-200 text-purple-800 text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shrink-0 mt-0.5">3</span>
+                                <span>Kamu bisa membandingkan **berat dua benda** pakai tangan / timbangan.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="bg-purple-200 text-purple-800 text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shrink-0 mt-0.5">4</span>
+                                <span>Kamu dapat menentukan mana benda yang **lebih berat** dan **lebih ringan**.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="bg-purple-200 text-purple-800 text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shrink-0 mt-0.5">5</span>
+                                <span>Kamu berani mengungkapkan hasil pengamatanmu di depan teman-teman!</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-amber-50 p-5 rounded-2xl border-2 border-amber-200 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-amber-900 text-lg mb-3 flex items-center gap-2">
+                                <i class="fas fa-star text-amber-600"></i> Kata Kunci Penting:
+                            </h3>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="bg-white border-2 border-amber-300 text-amber-800 px-3 py-1 rounded-full font-bold text-sm shadow-sm">📏 LEBIH PANJANG</span>
+                                <span class="bg-white border-2 border-amber-300 text-amber-800 px-3 py-1 rounded-full font-bold text-sm shadow-sm">✏️ LEBIH PENDEK</span>
+                                <span class="bg-white border-2 border-amber-300 text-amber-800 px-3 py-1 rounded-full font-bold text-sm shadow-sm">🪨 LEBIH BERAT</span>
+                                <span class="bg-white border-2 border-amber-300 text-amber-800 px-3 py-1 rounded-full font-bold text-sm shadow-sm">☁️ LEBIH RINGAN</span>
+                                <span class="bg-white border-2 border-amber-300 text-amber-800 px-3 py-1 rounded-full font-bold text-sm shadow-sm">⚖️ SAMA BERAT</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-amber-200 text-center">
+                            <p class="text-sm font-bold text-slate-600">Sudah Siap Memulai Petualangan?</p>
+                            <button onclick="showScreen('materi-panjang')" class="mt-3 w-full bg-brandOrange text-white font-bold py-3 rounded-xl shadow hover:bg-amber-600 transition">
+                                Belajar Panjang Sekarang 🚀
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 2. MENU MATERI MEMBANDINGKAN PANJANG ================= -->
+        <section id="screen-materi-panjang" class="screen-view hidden">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-lg border-4 border-sky-200">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b">
+                    <h2 class="text-2xl font-bold text-sky-900 flex items-center gap-3">
+                        <span>📏</span> Membandingkan Panjang Benda
+                    </h2>
+                    <button onclick="showScreen('dashboard')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-sm">
+                        ⬅️ Utama
+                    </button>
+                </div>
+
+                <!-- Concept Explanation Box -->
+                <div class="bg-sky-50 border-2 border-sky-200 p-5 rounded-2xl mb-6">
+                    <div class="flex items-start gap-4">
+                        <div class="text-4xl">💡</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-sky-900 mb-1">Tips Penting Mengukur Panjang:</h3>
+                            <p class="text-slate-700 text-sm md:text-base leading-relaxed">
+                                Supaya perbandingan adil dan tepat, **pangkal (ujung bawah/awal) dari kedua benda harus diletakkan sejajar atau rata!**
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Length Visualizer & Simulator -->
+                <div class="bg-slate-50 p-6 rounded-2xl border-2 border-slate-200 mb-6">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+                        <h3 class="font-bold text-slate-800 text-lg">Simulasi 1: Menyandingkan Ujung/Pangkal Benda</h3>
+                        <div class="flex gap-2">
+                            <button onclick="toggleAlign(true)" id="btn-align-true" class="bg-brandBlue text-white text-xs font-bold px-3 py-2 rounded-lg shadow">
+                                Luruskan Ujung (Rata)
+                            </button>
+                            <button onclick="toggleAlign(false)" id="btn-align-false" class="bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg">
+                                Ujung Tidak Rata
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Canvas Area -->
+                    <div class="bg-white p-6 rounded-xl border-2 border-dashed border-slate-300 min-h-[220px] flex flex-col justify-end relative overflow-hidden">
+                        
+                        <!-- Base Alignment Line -->
+                        <div id="alignment-line" class="absolute left-10 right-10 bottom-12 border-b-4 border-rose-400 z-10 transition-all duration-500">
+                            <span class="absolute -top-6 left-0 bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">Garis Pangkal Sejajar</span>
+                        </div>
+
+                        <!-- Objects Display Container -->
+                        <div class="flex items-end justify-center gap-12 md:gap-20 z-20 pb-2">
+                            
+                            <!-- Object A: Pencil -->
+                            <div id="obj-pencil" class="flex flex-col items-center transition-all duration-500 transform">
+                                <span class="font-bold text-xs bg-sky-100 text-sky-800 px-2 py-1 rounded mb-2">Pensil (Pendek)</span>
+                                <svg width="30" height="110" viewBox="0 0 30 110">
+                                    <path d="M 5,20 L 15,0 L 25,20 Z" fill="#FFE0BD"/>
+                                    <path d="M 12,5 L 15,0 L 18,5 Z" fill="#2B2B2B"/>
+                                    <rect x="5" y="20" width="20" height="80" fill="#FFD166"/>
+                                    <rect x="5" y="90" width="20" height="10" fill="#EF476F"/>
+                                </svg>
+                            </div>
+
+                            <!-- Object B: Ruler -->
+                            <div id="obj-ruler" class="flex flex-col items-center transition-all duration-500 transform">
+                                <span class="font-bold text-xs bg-sky-100 text-sky-800 px-2 py-1 rounded mb-2">Penggaris (Panjang)</span>
+                                <svg width="40" height="180" viewBox="0 0 40 180">
+                                    <rect x="5" y="0" width="30" height="180" rx="4" fill="#4EA8DE"/>
+                                    <!-- Tick Marks -->
+                                    <line x1="5" y1="20" x2="15" y2="20" stroke="#FFF" stroke-width="2"/>
+                                    <line x1="5" y1="40" x2="15" y2="40" stroke="#FFF" stroke-width="2"/>
+                                    <line x1="5" y1="60" x2="15" y2="60" stroke="#FFF" stroke-width="2"/>
+                                    <line x1="5" y1="80" x2="15" y2="80" stroke="#FFF" stroke-width="2"/>
+                                    <line x1="5" y1="100" x2="15" y2="100" stroke="#FFF" stroke-width="2"/>
+                                    <line x1="5" y1="120" x2="15" y2="120" stroke="#FFF" stroke-width="2"/>
+                                    <line x1="5" y1="140" x2="15" y2="140" stroke="#FFF" stroke-width="2"/>
+                                    <line x1="5" y1="160" x2="15" y2="160" stroke="#FFF" stroke-width="2"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question Prompt Box for Length -->
+                    <div id="length-question-box" class="mt-4 bg-amber-50 p-4 rounded-xl border border-amber-200 text-center">
+                        <p class="font-bold text-amber-900 text-base mb-3">❓ Berdasarkan gambar di atas, manakah benda yang **lebih panjang**?</p>
+                        <div class="flex justify-center gap-4">
+                            <button onclick="checkLengthAnswer('pensil')" class="bg-white border-2 border-amber-300 text-amber-900 font-bold px-6 py-2 rounded-xl hover:bg-amber-100 active:scale-95 transition">
+                                ✏️ Pensil
+                            </button>
+                            <button onclick="checkLengthAnswer('penggaris')" class="bg-white border-2 border-amber-300 text-amber-900 font-bold px-6 py-2 rounded-xl hover:bg-amber-100 active:scale-95 transition">
+                                📏 Penggaris
+                            </button>
+                        </div>
+                        <div id="length-feedback" class="mt-3 font-bold hidden text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- Next Material Button -->
+                <div class="flex justify-between items-center pt-4 border-t">
+                    <span class="text-xs font-semibold text-slate-500">Materi 1 dari 2</span>
+                    <button onclick="showScreen('materi-berat')" class="bg-brandOrange text-white font-bold px-6 py-3 rounded-xl shadow hover:bg-amber-600 transition flex items-center gap-2">
+                        <span>Lanjut ke Materi Berat</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 3. MENU MATERI MEMBANDINGKAN BERAT ================= -->
+        <section id="screen-materi-berat" class="screen-view hidden">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-lg border-4 border-emerald-200">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b">
+                    <h2 class="text-2xl font-bold text-emerald-900 flex items-center gap-3">
+                        <span>⚖️</span> Membandingkan Berat Benda
+                    </h2>
+                    <button onclick="showScreen('dashboard')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-sm">
+                        ⬅️ Utama
+                    </button>
+                </div>
+
+                <!-- Concept Explanation Box -->
+                <div class="bg-emerald-50 border-2 border-emerald-200 p-5 rounded-2xl mb-6">
+                    <div class="flex items-start gap-4">
+                        <div class="text-4xl">💡</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-emerald-900 mb-1">Cara Mengetahui Berat Benda:</h3>
+                            <p class="text-slate-700 text-sm md:text-base leading-relaxed">
+                                Pada timbangan jungkit: Benda yang **LEBIH BERAT akan turun ke bawah**, sedangkan benda yang **LEBIH RINGAN akan terangkat ke atas**!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Seesaw Scale Simulator -->
+                <div class="bg-slate-50 p-6 rounded-2xl border-2 border-slate-200 mb-6">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+                        <h3 class="font-bold text-slate-800 text-lg">Simulasi 2: Timbangan Sederhana</h3>
+                        <div class="flex gap-2">
+                            <button onclick="setSeesawPreset('kapas-batu')" class="bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">
+                                ☁️ Kapas vs 🪨 Batu
+                            </button>
+                            <button onclick="setSeesawPreset('buku-penghapus')" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-2 rounded-lg">
+                                📚 Buku vs 🧽 Penghapus
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Seesaw Balance Canvas/Graphic Area -->
+                    <div class="bg-white p-6 rounded-xl border-2 border-dashed border-slate-300 min-h-[260px] flex flex-col items-center justify-center relative overflow-hidden">
+                        
+                        <!-- Seesaw Base Stand -->
+                        <div class="absolute bottom-8 w-16 h-20 bg-slate-400 rounded-t-lg border-2 border-slate-600 z-10 flex justify-center items-center">
+                            <div class="w-4 h-4 rounded-full bg-slate-700"></div>
+                        </div>
+
+                        <!-- Seesaw Rotating Beam -->
+                        <div id="seesaw-beam" class="seesaw-beam w-full max-w-md h-4 bg-amber-700 rounded-full relative flex justify-between items-center px-4" style="transform: rotate(15deg);">
+                            
+                            <!-- Left Basket -->
+                            <div class="absolute -left-4 -top-24 flex flex-col items-center">
+                                <div id="left-weight-item" class="w-16 h-16 flex items-center justify-center text-4xl mb-1">
+                                    ☁️
+                                </div>
+                                <div class="w-20 h-8 border-b-4 border-x-4 border-amber-900 bg-amber-200/50 rounded-b-xl"></div>
+                                <span id="left-item-label" class="font-bold text-xs bg-slate-100 px-2 py-0.5 rounded shadow mt-1">Kapas</span>
+                            </div>
+
+                            <!-- Right Basket -->
+                            <div class="absolute -right-4 -top-24 flex flex-col items-center">
+                                <div id="right-weight-item" class="w-16 h-16 flex items-center justify-center text-4xl mb-1">
+                                    🪨
+                                </div>
+                                <div class="w-20 h-8 border-b-4 border-x-4 border-amber-900 bg-amber-200/50 rounded-b-xl"></div>
+                                <span id="right-item-label" class="font-bold text-xs bg-slate-100 px-2 py-0.5 rounded shadow mt-1">Batu</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Question Prompt Box for Weight -->
+                    <div class="mt-4 bg-emerald-50 p-4 rounded-xl border border-emerald-200 text-center">
+                        <p id="weight-question-text" class="font-bold text-emerald-900 text-base mb-3">❓ Manakah benda yang **lebih berat**?</p>
+                        <div class="flex justify-center gap-4">
+                            <button id="btn-weight-left" onclick="checkWeightAnswer('left')" class="bg-white border-2 border-emerald-300 text-emerald-900 font-bold px-6 py-2 rounded-xl hover:bg-emerald-100 active:scale-95 transition">
+                                ☁️ Kapas
+                            </button>
+                            <button id="btn-weight-right" onclick="checkWeightAnswer('right')" class="bg-white border-2 border-emerald-300 text-emerald-900 font-bold px-6 py-2 rounded-xl hover:bg-emerald-100 active:scale-95 transition">
+                                🪨 Batu
+                            </button>
+                        </div>
+                        <div id="weight-feedback" class="mt-3 font-bold hidden text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- Navigation Button -->
+                <div class="flex justify-between items-center pt-4 border-t">
+                    <button onclick="showScreen('materi-panjang')" class="bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-sm">
+                        ⬅️ Ke Panjang
+                    </button>
+                    <button onclick="showScreen('praktik')" class="bg-brandGreen text-white font-bold px-6 py-3 rounded-xl shadow hover:bg-emerald-600 transition flex items-center gap-2">
+                        <span>Lanjut ke Praktik Langsung</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 4. MENU PRAKTIK LANGSUNG DI KELAS ================= -->
+        <section id="screen-praktik" class="screen-view hidden">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-lg border-4 border-amber-200">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b">
+                    <h2 class="text-2xl font-bold text-amber-900 flex items-center gap-3">
+                        <span>🎒</span> Praktik Membandingkan Benda Real / Nyata
+                    </h2>
+                    <button onclick="showScreen('dashboard')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-sm">
+                        ⬅️ Utama
+                    </button>
+                </div>
+
+                <!-- Activity Instruction Header -->
+                <div class="bg-amber-100 p-4 rounded-2xl mb-6 flex items-center gap-4">
+                    <div class="text-4xl">👨‍🏫</div>
+                    <div>
+                        <h3 class="font-bold text-amber-900 text-base">Instruksi Guru:</h3>
+                        <p class="text-amber-800 text-sm">Ambil benda asli di meja atau dalam tas sekolahmu, lalu lakukan perbandingan secara langsung!</p>
+                    </div>
+                </div>
+
+                <!-- Tabs / Hands-On Activity Cards -->
+                <div class="space-y-6">
+                    
+                    <!-- Activity 1: Pencil vs Ruler -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border-2 border-slate-200">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="bg-amber-400 text-white font-bold px-3 py-1 rounded-full text-sm">Aktivitas 1</span>
+                            <h4 class="font-bold text-slate-800 text-base">Ambil 1 Pensil & 1 Penggaris di Mejamu</h4>
+                        </div>
+                        <p class="text-slate-600 text-sm mb-4">Sandingskan kedua benda dengan posisi bagian bawah (pangkal) sejajar rata!</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button onclick="recordPractical('Aktivitas 1', 'Penggaris lebih panjang')" class="p-3 bg-white border-2 border-amber-300 rounded-xl hover:bg-amber-50 text-left font-bold text-amber-900 flex items-center justify-between transition">
+                                <span>📏 Penggaris Lebih Panjang</span>
+                                <i class="fas fa-check-circle text-amber-500"></i>
+                            </button>
+                            <button onclick="recordPractical('Aktivitas 1', 'Pensil lebih panjang')" class="p-3 bg-white border-2 border-slate-200 rounded-xl hover:bg-slate-100 text-left font-bold text-slate-600 flex items-center justify-between transition">
+                                <span>✏️ Pensil Lebih Panjang</span>
+                                <i class="far fa-circle text-slate-300"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Activity 2: Two Books / Ribbons -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border-2 border-slate-200">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="bg-amber-400 text-white font-bold px-3 py-1 rounded-full text-sm">Aktivitas 2</span>
+                            <h4 class="font-bold text-slate-800 text-base">Bandingkan Panjang 2 Buku / Pita Berbeda</h4>
+                        </div>
+                        <p class="text-slate-600 text-sm mb-4">Tempelkan kedua pita atau letakkan dua buku bersebelahan.</p>
+                        
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="recordPractical('Aktivitas 2', 'Benda A lebih panjang')" class="px-4 py-2.5 bg-white border-2 border-sky-300 rounded-xl font-bold text-sky-800 hover:bg-sky-50 transition">
+                                🎀 Benda A Lebih Panjang
+                            </button>
+                            <button onclick="recordPractical('Aktivitas 2', 'Benda B lebih panjang')" class="px-4 py-2.5 bg-white border-2 border-sky-300 rounded-xl font-bold text-sky-800 hover:bg-sky-50 transition">
+                                🎀 Benda B Lebih Panjang
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Activity 3: Hand Weighing -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border-2 border-slate-200">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="bg-amber-400 text-white font-bold px-3 py-1 rounded-full text-sm">Aktivitas 3</span>
+                            <h4 class="font-bold text-slate-800 text-base">Angkat Buku Tulis (Kiri) & Tempat Pensil (Kanan)</h4>
+                        </div>
+                        <p class="text-slate-600 text-sm mb-4">Rasakan di telapak tanganmu, mana yang terasa menekan lebih berat?</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button onclick="recordPractical('Aktivitas 3', 'Buku Tulis Lebih Berat')" class="p-3 bg-white border-2 border-emerald-300 rounded-xl hover:bg-emerald-50 text-left font-bold text-emerald-900 flex items-center justify-between transition">
+                                <span>📚 Buku Tulis Lebih Berat</span>
+                                <i class="fas fa-hand-holding text-emerald-500"></i>
+                            </button>
+                            <button onclick="recordPractical('Aktivitas 3', 'Tempat Pensil Lebih Berat')" class="p-3 bg-white border-2 border-emerald-300 rounded-xl hover:bg-emerald-50 text-left font-bold text-emerald-900 flex items-center justify-between transition">
+                                <span>👝 Tempat Pensil Lebih Berat</span>
+                                <i class="fas fa-hand-holding text-emerald-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Feedback Bar -->
+                <div id="practical-summary" class="mt-6 p-4 bg-emerald-100 rounded-2xl border border-emerald-300 text-center font-bold text-emerald-900 hidden">
+                    🎉 Luar biasa! Hasil percobaan praktikummu telah tercatat dengan baik!
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button onclick="showScreen('game')" class="bg-brandOrange text-white font-bold px-8 py-3.5 rounded-xl shadow-lg hover:bg-amber-600 transition bounce-hover text-lg">
+                        Lanjut ke Permainan & Kuis 🎮
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 5. MENU PERMAINAN & KUIS INTERAKTIF ================= -->
+        <section id="screen-game" class="screen-view hidden">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-lg border-4 border-rose-200">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b">
+                    <h2 class="text-2xl font-bold text-rose-900 flex items-center gap-3">
+                        <span>🎮</span> Permainan Interaktif
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <span class="bg-rose-100 text-rose-800 font-bold px-3 py-1 rounded-full text-sm">Skor: <span id="game-score">0</span></span>
+                        <button onclick="showScreen('dashboard')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-sm">
+                            ⬅️ Utama
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Game Container -->
+                <div id="game-container" class="space-y-6">
+                    <!-- Current Challenge Question Title -->
+                    <div class="text-center">
+                        <span id="game-level-tag" class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Tantangan 1</span>
+                        <h3 id="game-question-text" class="text-xl md:text-2xl font-extrabold text-slate-800 mt-2">
+                            Pilihlah benda yang LEBIH PANJANG!
+                        </h3>
+                    </div>
+
+                    <!-- Dynamic Quiz Area -->
+                    <div id="game-play-area" class="min-h-[250px] flex items-center justify-center p-4">
+                        <!-- Content generated dynamically via JavaScript -->
+                    </div>
+
+                    <!-- Game Feedback Box -->
+                    <div id="game-feedback" class="text-center font-bold text-lg min-h-[30px]"></div>
+                </div>
+
+                <!-- Quiz Finish Celebration Box (Hidden by default) -->
+                <div id="game-finish-box" class="hidden text-center py-8">
+                    <div class="text-6xl mb-4 floating">🏆</div>
+                    <h3 class="text-3xl font-extrabold text-slate-800 mb-2">Horeee! Kamu Hebat Sekali!</h3>
+                    <p class="text-slate-600 text-lg mb-6">Kamu telah menyelesaikan semua tantangan pengukuran dengan baik.</p>
+                    
+                    <div class="inline-block bg-amber-50 border-2 border-amber-300 p-6 rounded-2xl mb-6 text-left">
+                        <p class="font-bold text-amber-900">Hasil Akhir Belajar:</p>
+                        <p id="final-student-info" class="text-slate-700 font-medium">Nama: -</p>
+                        <p id="final-score-info" class="text-slate-700 font-medium">Skor Game: 100 / 100</p>
+                    </div>
+
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <button onclick="resetGame()" class="bg-brandBlue text-white font-bold px-6 py-3 rounded-xl shadow hover:bg-blue-600 transition">
+                            🔄 Main Lagi
+                        </button>
+                        <button onclick="sendToGoogleSheets()" class="bg-brandGreen text-white font-bold px-6 py-3 rounded-xl shadow hover:bg-emerald-600 transition flex items-center gap-2">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Simpan Nilai Ke Guru</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-5xl mx-auto px-4 text-center text-xs font-semibold text-slate-500 flex flex-col md:flex-row justify-between items-center gap-2">
+            <p>© 2026 Petualangan Ukur - Media Pembelajaran Matematika SD Kelas 1</p>
+            <p class="text-slate-400">Pengukuran Panjang & Berat Benda (Hands-On Learning)</p>
+        </div>
+    </footer>
+
+    <!-- INSTRUCTION / HELP MODAL -->
+    <div id="help-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-brandYellow relative">
+            <button onclick="closeModal('help-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-bold">
+                ✖
+            </button>
+            <h3 class="text-xl font-bold text-brandPurple mb-3 flex items-center gap-2">
+                ℹ️ Petunjuk Penggunaan
+            </h3>
+            <div class="space-y-3 text-slate-600 text-sm">
+                <p>1. Tulis nama siswa pada halaman pembuka sebelum memulai.</p>
+                <p>2. Pelajari konsep panjang pada Menu 2 dan konsep berat pada Menu 3.</p>
+                <p>3. Lakukan praktik membandingkan benda nyata di dalam kelas pada Menu 4.</p>
+                <p>4. Uji pemahamanmu dengan memainkan kuis interaktif di Menu 5.</p>
+            </div>
+            <button onclick="closeModal('help-modal')" class="mt-6 w-full bg-brandYellow text-slate-800 font-bold py-3 rounded-xl shadow hover:bg-amber-400 transition">
+                Saya Mengerti 👍
+            </button>
+        </div>
+    </div>
+
+    <!-- AUDIO SYSTEM & APP SCRIPT INTERACTION LOGIC -->
+    <script>
+        /* ================= STATE MANAGEMENT ================= */
+        let studentName = "";
+        let soundEnabled = true;
+        let currentScore = 0;
+        let currentGameIndex = 0;
+        let practicalResults = {};
+
+        /* ================= WEB AUDIO API (NO EXTERNAL MP3 DEPENDENCY) ================= */
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    // Happy chord / ding sound
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                } else if (type === 'wrong') {
+                    // Low buzz sound
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'click') {
+                    // Gentle pop click
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.05);
+                }
+            } catch (e) {
+                console.log("Audio play error:", e);
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('audio-icon');
+            const text = document.getElementById('audio-text');
+            if (soundEnabled) {
+                icon.className = 'fas fa-volume-up text-lg';
+                text.innerText = 'Suara ON';
+                playSound('click');
+            } else {
+                icon.className = 'fas fa-volume-mute text-lg';
+                text.innerText = 'Suara OFF';
+            }
+        }
+
+        /* ================= SCREEN NAVIGATION ================= */
+        function showScreen(screenId) {
+            playSound('click');
+            const screens = document.querySelectorAll('.screen-view');
+            screens.forEach(s => s.classList.add('hidden'));
+
+            const target = document.getElementById(`screen-${screenId}`);
+            if (target) {
+                target.classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            if (screenId === 'game' && currentGameIndex === 0) {
+                loadGameLevel(0);
+            }
+        }
+
+        function checkNameAndNavigate(screenId) {
+            const nameInput = document.getElementById('student-name-input').value.trim();
+            if (!studentName && nameInput) {
+                studentName = nameInput;
+                document.getElementById('display-student-name').innerText = studentName;
+                document.getElementById('user-badge').classList.remove('hidden');
+                document.getElementById('user-badge').classList.add('flex');
+            }
+            showScreen(screenId);
+        }
+
+        function startApp() {
+            const nameInput = document.getElementById('student-name-input').value.trim();
+            if (!nameInput) {
+                alert("Silakan tulis nama kamu terlebih dahulu ya! 😊");
+                return;
+            }
+            studentName = nameInput;
+            document.getElementById('display-student-name').innerText = studentName;
+            document.getElementById('user-badge').classList.remove('hidden');
+            document.getElementById('user-badge').classList.add('flex');
+            showScreen('dashboard');
+        }
+
+        /* ================= MODAL CONTROLLER ================= */
+        function openModal(modalId) {
+            playSound('click');
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            playSound('click');
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        /* ================= SIMULATOR 1: LENGTH ALIGNMENT ================= */
+        function toggleAlign(aligned) {
+            playSound('click');
+            const pencil = document.getElementById('obj-pencil');
+            const alignLine = document.getElementById('alignment-line');
+            const btnTrue = document.getElementById('btn-align-true');
+            const btnFalse = document.getElementById('btn-align-false');
+
+            if (aligned) {
+                pencil.style.transform = 'translateY(0px)';
+                alignLine.style.opacity = '1';
+                btnTrue.className = 'bg-brandBlue text-white text-xs font-bold px-3 py-2 rounded-lg shadow';
+                btnFalse.className = 'bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg';
+            } else {
+                pencil.style.transform = 'translateY(-40px)';
+                alignLine.style.opacity = '0.3';
+                btnFalse.className = 'bg-brandBlue text-white text-xs font-bold px-3 py-2 rounded-lg shadow';
+                btnTrue.className = 'bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg';
+            }
+        }
+
+        function checkLengthAnswer(choice) {
+            const fb = document.getElementById('length-feedback');
+            fb.classList.remove('hidden');
+
+            if (choice === 'penggaris') {
+                playSound('correct');
+                fb.className = 'mt-3 font-bold text-emerald-600 text-sm';
+                fb.innerHTML = '🎉 Benar sekali! Penggaris lebih panjang daripada pensil.';
+            } else {
+                playSound('wrong');
+                fb.className = 'mt-3 font-bold text-rose-500 text-sm';
+                fb.innerHTML = '❌ Coba perhatikan lagi! Penggaris lebih tinggi/panjang daripada pensil.';
+            }
+        }
+
+        /* ================= SIMULATOR 2: SEESAW SCALE ================= */
+        function setSeesawPreset(preset) {
+            playSound('click');
+            const beam = document.getElementById('seesaw-beam');
+            const leftItem = document.getElementById('left-weight-item');
+            const rightItem = document.getElementById('right-weight-item');
+            const leftLabel = document.getElementById('left-item-label');
+            const rightLabel = document.getElementById('right-item-label');
+            const questionText = document.getElementById('weight-question-text');
+            const btnLeft = document.getElementById('btn-weight-left');
+            const btnRight = document.getElementById('btn-weight-right');
+            document.getElementById('weight-feedback').classList.add('hidden');
+
+            if (preset === 'kapas-batu') {
+                beam.style.transform = 'rotate(18deg)'; // Right is heavier -> down
+                leftItem.innerText = '☁️';
+                rightItem.innerText = '🪨';
+                leftLabel.innerText = 'Kapas';
+                rightLabel.innerText = 'Batu';
+                questionText.innerHTML = '❓ Manakah benda yang **lebih berat**?';
+                btnLeft.innerHTML = '☁️ Kapas';
+                btnRight.innerHTML = '🪨 Batu';
+                btnLeft.setAttribute('onclick', "checkWeightAnswer('batu', 'batu')");
+                btnRight.setAttribute('onclick', "checkWeightAnswer('batu', 'batu')");
+            } else {
+                beam.style.transform = 'rotate(-18deg)'; // Left is heavier -> down
+                leftItem.innerText = '📚';
+                rightItem.innerText = '🧽';
+                leftLabel.innerText = 'Buku';
+                rightLabel.innerText = 'Penghapus';
+                questionText.innerHTML = '❓ Manakah benda yang **lebih ringan**?';
+                btnLeft.innerHTML = '📚 Buku';
+                btnRight.innerHTML = '🧽 Penghapus';
+                btnLeft.setAttribute('onclick', "checkWeightAnswer('penghapus', 'penghapus')");
+                btnRight.setAttribute('onclick', "checkWeightAnswer('penghapus', 'penghapus')");
+            }
+        }
+
+        function checkWeightAnswer(choice, target) {
+            const fb = document.getElementById('weight-feedback');
+            fb.classList.remove('hidden');
+
+            if (choice === target || choice === 'right') { // Default preset kapas vs batu correct is batu (right)
+                playSound('correct');
+                fb.className = 'mt-3 font-bold text-emerald-600 text-sm';
+                fb.innerHTML = '🎉 Benar sekali! Benda yang berada di posisi bawah adalah yang lebih berat.';
+            } else {
+                playSound('wrong');
+                fb.className = 'mt-3 font-bold text-rose-500 text-sm';
+                fb.innerHTML = '❌ Kurang tepat! Ingat, benda yang turun ke bawah adalah yang lebih berat.';
+            }
+        }
+
+        /* ================= HANDS-ON PRACTICAL TRACKER ================= */
+        function recordPractical(activity, result) {
+            playSound('click');
+            practicalResults[activity] = result;
+            const summary = document.getElementById('practical-summary');
+            summary.classList.remove('hidden');
+            summary.innerHTML = `✅ Terhitung: ${activity} (${result})`;
+        }
+
+        /* ================= GAME & QUIZ ENGINE ================= */
+        const gameQuestions = [
+            {
+                type: 'choice',
+                title: 'Mana yang LEBIH PANJANG?',
+                items: [
+                    { id: 'a', name: 'Pita Merah', icon: '🎗️', size: 'w-48 h-6', isCorrect: true },
+                    { id: 'b', name: 'Pita Biru', icon: '🎗️', size: 'w-24 h-6', isCorrect: false }
+                ]
+            },
+            {
+                type: 'choice',
+                title: 'Mana yang LEBIH PENDEK?',
+                items: [
+                    { id: 'a', name: 'Sendok Makan', icon: '🥄', size: 'text-4xl', isCorrect: true },
+                    { id: 'b', name: 'Sapu Lantai', icon: '🧹', size: 'text-6xl', isCorrect: false }
+                ]
+            },
+            {
+                type: 'choice',
+                title: 'Mana yang LEBIH BERAT?',
+                items: [
+                    { id: 'a', name: 'Botol Penuh Air', icon: '🍾', isCorrect: true },
+                    { id: 'b', name: 'Botol Kosong', icon: '🧴', isCorrect: false }
+                ]
+            },
+            {
+                type: 'choice',
+                title: 'Mana yang LEBIH RINGAN?',
+                items: [
+                    { id: 'a', name: 'Batu Besar', icon: '🪨', isCorrect: false },
+                    { id: 'b', name: 'Kapas Lembut', icon: '☁️', isCorrect: true }
+                ]
+            }
+        ];
+
+        function loadGameLevel(index) {
+            if (index >= gameQuestions.length) {
+                // Game Finished
+                document.getElementById('game-container').classList.add('hidden');
+                document.getElementById('game-finish-box').classList.remove('hidden');
+                document.getElementById('final-student-info').innerText = `Nama Siswa: ${studentName || 'Siswa Class 1'}`;
+                document.getElementById('final-score-info').innerText = `Skor Akhir: ${currentScore} / ${gameQuestions.length * 25}`;
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                return;
+            }
+
+            const q = gameQuestions[index];
+            document.getElementById('game-level-tag').innerText = `Tantangan ${index + 1} dari ${gameQuestions.length}`;
+            document.getElementById('game-question-text').innerText = q.title;
+            document.getElementById('game-feedback').innerText = '';
+
+            const playArea = document.getElementById('game-play-area');
+            playArea.innerHTML = '';
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-lg';
+
+            q.items.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-slate-50 border-4 border-slate-200 hover:border-brandOrange p-6 rounded-3xl flex flex-col items-center justify-center gap-3 transition bounce-hover shadow-md';
+                btn.onclick = () => answerGame(item.isCorrect);
+
+                btn.innerHTML = `
+                    <div class="${item.size || 'text-5xl'}">${item.icon}</div>
+                    <span class="font-bold text-slate-800 text-lg">${item.name}</span>
+                `;
+                grid.appendChild(btn);
+            });
+
+            playArea.appendChild(grid);
+        }
+
+        function answerGame(isCorrect) {
+            const fb = document.getElementById('game-feedback');
+            if (isCorrect) {
+                playSound('correct');
+                currentScore += 25;
+                document.getElementById('game-score').innerText = currentScore;
+                fb.className = 'text-center font-bold text-lg text-emerald-600';
+                fb.innerText = '🌟 YAY! Jawabanmu Benar!';
+                
+                setTimeout(() => {
+                    currentGameIndex++;
+                    loadGameLevel(currentGameIndex);
+                }, 1200);
+            } else {
+                playSound('wrong');
+                fb.className = 'text-center font-bold text-lg text-rose-500';
+                fb.innerText = '❌ Ups, coba perhatikan lagi ya!';
+            }
+        }
+
+        function resetGame() {
+            currentScore = 0;
+            currentGameIndex = 0;
+            document.getElementById('game-score').innerText = '0';
+            document.getElementById('game-finish-box').classList.add('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
+            loadGameLevel(0);
+        }
+
+        /* ================= GOOGLE APPS SCRIPT INTEGRATION ================= */
+        function sendToGoogleSheets() {
+            playSound('click');
+            
+            // Kode ini disiapkan untuk dihubungkan ke Web App URL Google Apps Script milik Guru
+            const payload = {
+                nama: studentName || "Siswa Anonim",
+                skor: currentScore,
+                praktik: JSON.stringify(practicalResults),
+                waktu: new Date().toLocaleString("id-ID")
+            };
+
+            /* Contoh Penjelasan Integrasi Google Apps Script (GAS):
+               Di Google Sheets -> Extension -> Apps Script:
+               
+               function doPost(e) {
+                 var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+                 var data = JSON.parse(e.postData.contents);
+                 sheet.appendRow([data.waktu, data.nama, data.skor, data.praktik]);
+                 return ContentService.createTextOutput("Success");
+               }
+            */
+
+            alert(`Data Nilai Siswa (${payload.nama}) berhasil disimpan!\nSkor Kuis: ${payload.skor}\nHasil Praktik Terkirim ke Google Sheets Guru.`);
+        }
+    </script>
+</body>
+</html>
